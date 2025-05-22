@@ -1,0 +1,709 @@
+{
+  "name": "Telegram Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "37a4a0db-c162-4abe-97b9-ada1398be031"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "91310c79-c4a6-4e06-80f0-a7570c37d303",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a8d4aad8-d112-4d43-9ea2-2e097626be0a",
+                    "leftValue": "error",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -480,
+        -20
+      ],
+      "id": "a6436948-21f8-4ddb-9a5f-c4f8c7343ab9",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -120,
+        -160
+      ],
+      "id": "95345936-7f85-4294-8cdf-fa4d5493bcaf",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "v5m2La9UDXhw8xSK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f67f7565-48f5-46bf-8fd9-b11cc478ef9b",
+              "name": "text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -280,
+        0
+      ],
+      "id": "06b94af6-fe41-498a-ac5f-b500282f0e9d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=#Role\nYou are a helpful assistant who has access to Google Gmail and Google Calendar and performs various duties based on the instructions received.\n\n#Language\n1.You should respond to the user message in the same type of language received. \n2.Use British English spelling when English is the language of communication.\n\n#Tone\nYou should sound polite, friendly, approachable and in-person.\n\n#Rules\n1.Don't make things up. If you need additional information to complete your task, ask the user a clarifying question. If you are asked a question that you don't know the answer to, say so.\n2.Make sure the main advice is clear and actionable.\n\n#Additional Context\n1.The current date is {{ $now }}\n2.My name is Yuxin Li and you should use it appropriately based on the situation.\n3.When you are instructed to send an email, you are allowed to send it right away without asking for the content you create to be double-checked."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        40,
+        -60
+      ],
+      "id": "3a14797e-f42b-4a73-83f9-6f29503e0cf8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -140,
+        160
+      ],
+      "id": "5a070901-1287-4386-96c1-f77b47e4ea8c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "v5m2La9UDXhw8xSK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram_Trigger').item.json.update_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        20,
+        160
+      ],
+      "id": "bfef82d7-0c53-4c2d-beb3-4906d1d21e6d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to create a new Google Calendar event.",
+        "calendar": {
+          "__rl": true,
+          "value": "kingsley19941010@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kingsley19941010@gmail.com"
+        },
+        "start": "={{ $fromAI(\"Start\",\"it is the meeting date starting time\") }}",
+        "end": "={{ $fromAI(\"End\",\"it is the meeting date ending time\") }}",
+        "additionalFields": {
+          "summary": "={{ $fromAI(\"eventName\",\"the name of the calendar event\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        160
+      ],
+      "id": "3fdbc318-234b-47af-a565-5cbecea77df6",
+      "name": "Create Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "CGl3eC8eL7y5NatK",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "kingsley19941010@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kingsley19941010@gmail.com"
+        },
+        "eventId": "={{ $fromAI(\"Event_ID\",\"it is the ID of the specific event\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        280,
+        160
+      ],
+      "id": "6052d19f-ea20-4087-bf9e-1626196d84f2",
+      "name": "Delete Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "CGl3eC8eL7y5NatK",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "kingsley19941010@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kingsley19941010@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $fromAI(\"after\") }}",
+        "timeMax": "={{ $now.plus({ week: 52 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        160
+      ],
+      "id": "b4b7d73e-cc48-4f08-b451-e547ade9c56e",
+      "name": "Get All Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "CGl3eC8eL7y5NatK",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "kingsley19941010@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kingsley19941010@gmail.com"
+        },
+        "eventId": "={{ $fromAI(\"Event_ID\",\"it is the ID of the specific event\") }}",
+        "updateFields": {
+          "end": "={{ $fromAI(\"End\",\"it is the meeting date ending time\") }}",
+          "start": "={{ $fromAI(\"Start\",\"it is the meeting date starting time\") }}",
+          "summary": "={{ $fromAI(\"eventName\",\"the name of the calendar event\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        520,
+        160
+      ],
+      "id": "d7e25a15-3134-4cc5-b472-d48bceafd3d3",
+      "name": "Update Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "CGl3eC8eL7y5NatK",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        160
+      ],
+      "id": "d894f1af-0252-42ce-bede-be687120b1b9",
+      "name": "Get All Emails",
+      "webhookId": "be74302c-4a57-466b-84a2-cb79c7babeaa",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKGWvHgjBKXcv62Q",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $fromAI(\"Subject\",\"a clear and concise subject line\") }}",
+        "message": "={{ $fromAI(\"Message\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1000,
+        160
+      ],
+      "id": "2dfc4592-5315-4a41-84de-94f2c4dbce48",
+      "name": "Create Drafts",
+      "webhookId": "ce2e7a8e-e599-4547-b3c9-88b4537707ec",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKGWvHgjBKXcv62Q",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram_Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        380,
+        -60
+      ],
+      "id": "7577b1a2-b8f0-4b3d-9220-24e6d951b630",
+      "name": "Telegram_Send Message",
+      "webhookId": "ce115989-1f41-4e1c-b9cd-2bb8a1a503e6",
+      "credentials": {
+        "telegramApi": {
+          "id": "AyaJdjJuGB2Hc3jY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -620,
+        -20
+      ],
+      "id": "d2449d99-3474-4ce1-abb7-59afe6c372a1",
+      "name": "Telegram_Trigger",
+      "webhookId": "65459a75-b078-427a-ba63-568cd121ceba",
+      "credentials": {
+        "telegramApi": {
+          "id": "AyaJdjJuGB2Hc3jY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -280,
+        -160
+      ],
+      "id": "332051f4-9760-425b-94c9-09f08fb49961",
+      "name": "Telegram_Get File",
+      "webhookId": "05d12c11-cc85-4752-83fd-488c408934f6",
+      "credentials": {
+        "telegramApi": {
+          "id": "AyaJdjJuGB2Hc3jY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI(\"To\",\"raw email address of the recipient\") }}",
+        "subject": "={{ $fromAI(\"Subject\",\"a clear and concise subject line\") }}",
+        "emailType": "text",
+        "message": "={{ $fromAI(\"body\",\"the body of the email itself\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        760,
+        160
+      ],
+      "id": "ebaf06d2-dcab-4f05-bfdb-d77c7141dcbe",
+      "name": "Send Emails",
+      "webhookId": "94e3ddd3-ff0a-42c0-b656-910aabe4ab2c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKGWvHgjBKXcv62Q",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $fromAI('Message_ID', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ $fromAI(\"Message\",\"the message of the email itself\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        160
+      ],
+      "id": "1655febc-cba2-4899-835e-88c5c456655a",
+      "name": "Reply Emails",
+      "webhookId": "1d36c264-f1cc-4f38-85d3-c675f52a2444",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKGWvHgjBKXcv62Q",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $fromAI('Message_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        160
+      ],
+      "id": "424f2c3f-ead9-4b9e-8911-73a524a8ad1b",
+      "name": "Delete Emails",
+      "webhookId": "5ffb5e74-912f-43bc-be09-75c68732d7cb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKGWvHgjBKXcv62Q",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Telegram_Get File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram_Send Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Drafts": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram_Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram_Get File": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d99f91d1-71d6-4888-a545-a248cc0858c6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "af0bc798548c38ec18930915ae1161af1c83a2a7ef676f7aba8a315dcaf94c9b"
+  },
+  "id": "aqCk3bkbySzgtNP4",
+  "tags": []
+}
